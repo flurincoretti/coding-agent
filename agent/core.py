@@ -90,7 +90,7 @@ def run_tool(block: Any) -> Dict[str, Any]:
             "type": "tool_result",
             "tool_use_id": block.id,
             "is_error": True,
-            "error": f"Unknown tool '{name}'",
+            "content": f"Unknown tool '{name}'",
         }
         print(f"\033[91mTool error\033[0m: Unknown tool {name}")
     else:
@@ -107,7 +107,7 @@ def run_tool(block: Any) -> Dict[str, Any]:
                 "type": "tool_result",
                 "tool_use_id": block.id,
                 "is_error": True,
-                "error": str(e),
+                "content": str(e),
             }
             print(f"\033[91mTool error\033[0m: {e}")
 
