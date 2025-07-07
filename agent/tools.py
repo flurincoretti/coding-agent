@@ -93,8 +93,33 @@ def list_files(inp: Dict[str, str]) -> str:
     return json.dumps(sorted(results))
 
 
-def read_file() -> str:
-    raise NotImplementedError
+def read_file(inp: Dict[str, str]) -> str:
+    """
+    Return the textual contents of a file.
+    """
+    if "path" not in inp or not inp["path"]:
+        raise ValueError("`path` is required")
+
+    rel_path = Path(inp["path"])
+
+    if rel_path.is_absolute():
+        raise ValueError("Absolute paths are not allowed")
+
+    base_dir = Path(".").resolve()
+    abs_path = (base_dir / rel_path).resolve()
+
+    if base_dir not in abs_path.parents and abs_path != base_dir:
+        raise ValueError("Path escapes base directory")
+
+    if not abs_path.exists():
+        raise FileNotFoundError(f"No such file: {rel_path}")
+    if abs_path.is_dir():
+        raise IsADirectoryError(f"Expected a file, found a directory: {rel_path}")
+
+    try:
+        return abs_path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return abs_path.read_text(encoding="latin-1")
 
 
 def edit_file() -> str:
@@ -143,5 +168,5 @@ EDIT_FILE = {
 }
 
 
-ALL_TOOLS = [LIST_FILES]
+ALL_TOOLS = [LIST_FILES, READ_FILE]
 TOOL_MAP = {t["name"]: t for t in ALL_TOOLS}
