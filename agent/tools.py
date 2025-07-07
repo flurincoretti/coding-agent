@@ -50,6 +50,28 @@ def _get_gitignore(root: Path) -> pathspec.PathSpec:
     return pathspec.PathSpec.from_lines("gitwildmatch", patterns)
 
 
+def _resolve_relative(path_str: str) -> Path:
+    """
+    Resolve *path_str* against project root, ensuring it is
+    not absolute and does not escape the repo via "..".
+    """
+    if not path_str:
+        raise ValueError("`path` is required")
+
+    rel_path = Path(path_str)
+
+    if rel_path.is_absolute():
+        raise ValueError("Absolute paths are not allowed")
+
+    base_dir = Path(".").resolve()
+    abs_path = (base_dir / rel_path).resolve()
+
+    if base_dir not in abs_path.parents and abs_path != base_dir:
+        raise ValueError("Path escapes project root")
+
+    return abs_path
+
+
 def list_files(inp: Dict[str, str]) -> str:
     """
     Recursively list files under a given path, respecting .gitignore rules.
@@ -97,29 +119,17 @@ def read_file(inp: Dict[str, str]) -> str:
     """
     Return the textual contents of a file.
     """
-    if "path" not in inp or not inp["path"]:
-        raise ValueError("`path` is required")
+    path = _resolve_relative(inp["path"])
 
-    rel_path = Path(inp["path"])
-
-    if rel_path.is_absolute():
-        raise ValueError("Absolute paths are not allowed")
-
-    base_dir = Path(".").resolve()
-    abs_path = (base_dir / rel_path).resolve()
-
-    if base_dir not in abs_path.parents and abs_path != base_dir:
-        raise ValueError("Path escapes base directory")
-
-    if not abs_path.exists():
-        raise FileNotFoundError(f"No such file: {rel_path}")
-    if abs_path.is_dir():
-        raise IsADirectoryError(f"Expected a file, found a directory: {rel_path}")
+    if not path.exists():
+        raise FileNotFoundError(f"No such file: {path}")
+    if path.is_dir():
+        raise IsADirectoryError(f"Expected a file, found a directory: {inp['path']}")
 
     try:
-        return abs_path.read_text(encoding="utf-8")
+        return path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
-        return abs_path.read_text(encoding="latin-1")
+        return path.read_text(encoding="latin-1")
 
 
 def edit_file() -> str:
