@@ -2,20 +2,25 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, cast
 
 import anthropic
-from environs import Env
+from pydantic_settings import BaseSettings
 
 from agent.tools import ALL_TOOLS, TOOL_MAP
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-env = Env()
-env.read_env(BASE_DIR / ".env")
-ANTHROPIC_API_KEY = env.str("ANTHROPIC_API_KEY")
-MODEL = env.str("MODEL")
 
-DEBUG = env.bool("DEBUG")
+class Settings(BaseSettings):
+    debug: bool = False
+    anthropic_api_key: str
+    model: str
 
-client = anthropic.Client(api_key=ANTHROPIC_API_KEY)
+    class Config:
+        env_file = BASE_DIR / ".env"
+
+
+settings = Settings()
+
+client = anthropic.Client(api_key=settings.anthropic_api_key)
 
 # Type alias for message parameters used in conversation history.
 # Represents the structure: {'role': 'user'|'assistant', 'content': List[Dict[str, str]]}
@@ -47,7 +52,7 @@ def loop() -> None:
     Returns:
         None
     """
-    print(f"Chat with Claude ({MODEL}) — press CTRL-C to quit")
+    print(f"Chat with Claude ({settings.model}) — press CTRL-C to quit")
     while True:
         try:
             user_input = input("\033[93mYou\033[0m: ")
@@ -60,7 +65,7 @@ def loop() -> None:
 
         CONV.append({"role": "user", "content": [{"type": "text", "text": user_input}]})
         message = client.messages.create(
-            model=MODEL,
+            model=settings.model,
             max_tokens=1024,
             messages=cast(List[anthropic.types.MessageParam], CONV),
             tools=cast(Iterable[anthropic.types.ToolUnionParam], TOOLS),
@@ -87,7 +92,7 @@ def handle(message: anthropic.types.Message) -> None:
         current = pending.pop(0)
         CONV.append({"role": message.role, "content": current.content})
 
-        if DEBUG:
+        if settings.debug:
             print(f"\033[91mDebug\033[0m: {message.to_dict()}")
         for block in current.content:
             if block.type == "text":
@@ -97,7 +102,7 @@ def handle(message: anthropic.types.Message) -> None:
                 CONV.append({"role": "user", "content": [result_block]})
                 pending.append(
                     client.messages.create(
-                        model=MODEL,
+                        model=settings.model,
                         max_tokens=1024,
                         messages=cast(List[anthropic.types.MessageParam], CONV),
                         tools=cast(Iterable[anthropic.types.ToolUnionParam], TOOLS),
