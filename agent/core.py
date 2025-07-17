@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List, cast
 
 import anthropic
 from environs import Env
@@ -17,8 +17,18 @@ DEBUG = env.bool("DEBUG")
 
 client = anthropic.Client(api_key=ANTHROPIC_API_KEY)
 
-CONV: List[Dict[str, Any]] = []
-TOOLS: List[dict] = [
+# Type alias for message parameters used in conversation history.
+# Represents the structure: {'role': 'user'|'assistant', 'content': List[Dict[str, str]]}
+# where content contains message blocks like [{'type': 'text', 'text': 'message content'}].
+MessageParam = Dict[str, Any]
+
+# Type alias for tool parameter definitions passed to the Anthropic API.
+# Represents tool schema with structure: {'name': str, 'description': str, 'input_schema': Dict}.
+# Compatible with anthropic.types.ToolUnionParam for Claude function calling.
+ToolParam = Dict[str, Any]
+
+CONV: List[MessageParam] = []
+TOOLS: List[ToolParam] = [
     {
         "name": tool["name"],
         "description": tool["description"],
@@ -52,8 +62,8 @@ def loop() -> None:
         message = client.messages.create(
             model=MODEL,
             max_tokens=1024,
-            messages=CONV,
-            tools=TOOLS,
+            messages=cast(List[anthropic.types.MessageParam], CONV),
+            tools=cast(Iterable[anthropic.types.ToolUnionParam], TOOLS),
         )
         handle(message)
 
@@ -89,8 +99,8 @@ def handle(message: anthropic.types.Message) -> None:
                     client.messages.create(
                         model=MODEL,
                         max_tokens=1024,
-                        messages=CONV,
-                        tools=TOOLS,
+                        messages=cast(List[anthropic.types.MessageParam], CONV),
+                        tools=cast(Iterable[anthropic.types.ToolUnionParam], TOOLS),
                     )
                 )
 
