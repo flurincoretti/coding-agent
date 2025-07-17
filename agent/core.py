@@ -29,6 +29,14 @@ TOOLS: List[dict] = [
 
 
 def loop() -> None:
+    """Main interaction loop for the chat agent.
+
+    Continuously accepts user input, sends it to the Claude API,
+    and processes responses until interrupted with CTRL-C.
+
+    Returns:
+        None
+    """
     print(f"Chat with Claude ({MODEL}) — press CTRL-C to quit")
     while True:
         try:
@@ -51,9 +59,16 @@ def loop() -> None:
 
 
 def handle(message: anthropic.types.Message) -> None:
-    """
-    Consume a message, print any assistant text to the console, resolve tool
-    calls, and continue until the assistant has no outstanding tool requests.
+    """Processes Claude's response messages and handles tool calls.
+
+    Consumes a message, prints any assistant text to the console, resolves tool
+    calls, and continues until the assistant has no outstanding tool requests.
+
+    Args:
+        message: An Anthropic API Message object containing Claude's response.
+
+    Returns:
+        None
     """
 
     pending: List[anthropic.types.Message] = [message]
@@ -81,6 +96,18 @@ def handle(message: anthropic.types.Message) -> None:
 
 
 def run_tool(block: Any) -> Dict[str, Any]:
+    """Executes a tool based on Claude's tool_use request.
+
+    Takes a tool_use block from Claude's response, attempts to execute the
+    specified tool with the provided parameters, and returns a result block
+    that can be sent back to Claude.
+
+    Args:
+        block: A tool_use block from Claude's response containing tool name and input.
+
+    Returns:
+        Dict[str, Any]: A tool_result block containing the execution result or error.
+    """
     name: str = getattr(block, "name", "")
     payload: Dict[str, Any] = getattr(block, "input", {}) or {}
     spec = TOOL_MAP.get(name)
