@@ -8,6 +8,15 @@ import pathspec
 
 
 def schema(props: Dict[str, Any], required: List[str]) -> Dict[str, Any]:
+    """Creates a JSON schema object for tool input validation.
+
+    Args:
+        props: Dictionary containing property definitions for the schema.
+        required: List of property names that are required.
+
+    Returns:
+        Dict[str, Any]: A JSON schema object with properties and requirements defined.
+    """
     return {
         "type": "object",
         "properties": props,
@@ -17,11 +26,17 @@ def schema(props: Dict[str, Any], required: List[str]) -> Dict[str, Any]:
 
 
 def _get_gitignore(root: Path) -> pathspec.PathSpec:
-    """
-    Collect ignore patterns from .gitignore, .git/info/exclude, and the
-    global .gitignore file configured via core.excludesFile.
-    Return a PathSpec object that can be used to match files against
-    all collected ignore patterns.
+    """Collects and compiles gitignore patterns from multiple sources.
+
+    Collects ignore patterns from .gitignore, .git/info/exclude, and the
+    global .gitignore file.
+
+    Args:
+        root: The root directory path to search for gitignore files.
+
+    Returns:
+        pathspec.PathSpec: A PathSpec object that can be used to match files against
+            all collected ignore patterns.
     """
 
     patterns: List[str] = []
@@ -51,9 +66,19 @@ def _get_gitignore(root: Path) -> pathspec.PathSpec:
 
 
 def _resolve_relative(path_str: str) -> Path:
-    """
-    Resolve *path_str* against project root, ensuring it is
+    """Resolves a relative path safely within project boundaries.
+
+    Resolves path_str against project root, ensuring it is
     not absolute and does not escape the repo via "..".
+
+    Args:
+        path_str: The path string to resolve.
+
+    Returns:
+        Path: The resolved absolute path.
+
+    Raises:
+        ValueError: If path is empty, absolute, or escapes project root.
     """
     if not path_str:
         raise ValueError("`path` is required")
@@ -73,8 +98,17 @@ def _resolve_relative(path_str: str) -> Path:
 
 
 def list_files(inp: Dict[str, str]) -> str:
-    """
-    Recursively list files under a given path, respecting .gitignore rules.
+    """Recursively lists files under a given path, respecting .gitignore rules.
+
+    Args:
+        inp: Dictionary containing input parameters.
+            path: Optional base directory path. Defaults to current directory.
+
+    Returns:
+        str: A JSON string containing an array of relative file paths.
+
+    Raises:
+        FileNotFoundError: If the specified path does not exist.
     """
 
     base_dir_str = inp.get("path", ".")
@@ -116,8 +150,19 @@ def list_files(inp: Dict[str, str]) -> str:
 
 
 def read_file(inp: Dict[str, str]) -> str:
-    """
-    Return the textual contents of a file.
+    """Returns the textual contents of a file.
+
+    Args:
+        inp: Dictionary containing input parameters.
+            path: The relative path to the file to read.
+
+    Returns:
+        str: The text content of the file.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        IsADirectoryError: If the path points to a directory instead of a file.
+        ValueError: If the path is invalid.
     """
     path = _resolve_relative(inp["path"])
 
@@ -133,6 +178,7 @@ def read_file(inp: Dict[str, str]) -> str:
 
 
 def edit_file() -> str:
+    """Edits the content of a file by replacing text."""
     raise NotImplementedError
 
 
