@@ -5,6 +5,9 @@ install:
     uv venv
     uv sync
 
+update:
+    uv lock --upgrade
+
 run:
     uv run agent
 
