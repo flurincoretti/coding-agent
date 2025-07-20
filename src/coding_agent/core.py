@@ -4,9 +4,9 @@ from typing import Any, Dict, Iterable, List, cast
 import anthropic
 from pydantic_settings import BaseSettings
 
-from agent.tools import ALL_TOOLS, TOOL_MAP
+from coding_agent.tools import ALL_TOOLS, TOOL_MAP
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class Settings(BaseSettings):

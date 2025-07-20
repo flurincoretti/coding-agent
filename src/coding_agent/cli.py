@@ -1,6 +1,6 @@
 import click
 
-from agent.core import loop
+from coding_agent.core import loop
 
 
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))

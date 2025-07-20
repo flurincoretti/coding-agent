@@ -23,7 +23,7 @@ Install dependencies:
 uv sync
 ```
 
-Configure the environment and add your ANTHROPIC_API_KEY:
+Configure the environment and add your Anthropic API key:
 
 ```
 cp .env.example .env

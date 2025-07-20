@@ -1,9 +1,9 @@
 [project]
-name = "agent"
-version = "0.1.0"
+name = "coding-agent"
+version = "1.0.0"
 description = "A coding agent."
 readme = "README.md"
-authors = [{name = "Flurin Coretti", email = "hello@flurincoretti.com"}]
+authors = [{name = "Flurin Coretti", email = "hello@flurincoretti.com" }]
 license = "Apache-2.0"
 requires-python = ">=3.13"
 dependencies = [
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-agent = "agent.cli:main"
+agent = "coding_agent.cli:main"
 
 [build-system]
 requires = ["hatchling"]
