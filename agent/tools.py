@@ -177,9 +177,61 @@ def read_file(inp: Dict[str, str]) -> str:
         return path.read_text(encoding="latin-1")
 
 
-def edit_file() -> str:
-    """Edits the content of a file by replacing text."""
-    raise NotImplementedError
+def edit_file(inp: Dict[str, str]) -> str:
+    """Edits the content of a file by replacing text or creating a new file.
+
+    Replaces all occurrences of old_str with new_str in the specified file.
+    If the file does not exist and old_str is empty, creates a new file with
+    new_str as its content.
+
+    Args:
+        inp: Dictionary containing input parameters.
+            path: The relative path to the file to edit.
+            old_str: The string to be replaced. If empty and file doesn't exist,
+                     a new file will be created.
+            new_str: The string to replace old_str with, or the content for a new file.
+
+    Returns:
+        str: A success message indicating the file was edited or created.
+
+    Raises:
+        FileNotFoundError: If the file does not exist and old_str is not empty.
+        IsADirectoryError: If the path points to a directory instead of a file.
+        ValueError: If the path is invalid.
+    """
+    path = _resolve_relative(inp["path"])
+    old_str = inp["old_str"]
+    new_str = inp["new_str"]
+
+    # Check if we're creating a new file.
+    if not path.exists() and old_str == "":
+        # Create parent directories if they don't exist.
+        if not path.parent.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Create new file with new_str as content.
+        path.write_text(new_str, encoding="utf-8")
+        return f"Created new file: {inp['path']}"
+
+    # For existing files.
+    if not path.exists():
+        raise FileNotFoundError(f"No such file: {path}")
+    if path.is_dir():
+        raise IsADirectoryError(f"Expected a file, found a directory: {inp['path']}")
+
+    # Read the file content.
+    try:
+        content = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        content = path.read_text(encoding="latin-1")
+
+    # Replace old_str with new_str.
+    new_content = content.replace(old_str, new_str)
+
+    # Write the modified content back to the file.
+    path.write_text(new_content, encoding="utf-8")
+
+    return f"Successfully edited file: {inp['path']}"
 
 
 READ_FILE = {
@@ -224,5 +276,5 @@ EDIT_FILE = {
 }
 
 
-ALL_TOOLS = [LIST_FILES, READ_FILE]
+ALL_TOOLS = [LIST_FILES, READ_FILE, EDIT_FILE]
 TOOL_MAP = {t["name"]: t for t in ALL_TOOLS}
